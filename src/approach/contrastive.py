@@ -225,7 +225,10 @@ class Appr(Inc_Learning_Appr):
 
         # Check if the positive per row are > 0.
         log_probs = torch.div(log_probs, num_positive_per_row)
-        log_probs = torch.nan_to_num(log_probs)
+
+        # Same thing that torch.nan_to_num(). It removes NaN created by zero divided zero.
+        log_probs[torch.isfinite(log_probs)] = 0
+        #log_probs = torch.nan_to_num(log_probs)
         loss = -log_probs
 
         #loss = torch.reshape(loss, shape=[2, len(targets)])
