@@ -146,7 +146,9 @@ class EarlyConvViTStud(nn.Module):
         x = x.mean(dim = 1) if self.pool == 'mean' else x[:, 0]
 
         self.token_list = x
-        self.token_list = self.token_list.cpu().detach().numpy()
+        self.token_list = x.detach().clone()
+        self.token_list = self.token_list.cpu().numpy()
+        #self.token_list = self.token_list.cpu().detach().numpy()
 
         x = self.to_latent(x)
         return x
