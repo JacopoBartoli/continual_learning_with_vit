@@ -10,11 +10,11 @@ from datasets.exemplars_selection import override_dataset_transform
 
 
 class Appr(Inc_Learning_Appr):
-    """Class implementing the finetuning baseline"""
+    """Class implementing the Supervised Contrastive Loss and classification icarl like."""
 
     def __init__(self, model, device, nepochs=100, lr=0.05, lr_min=1e-4, lr_factor=3, lr_patience=5, clipgrad=10000,
                  momentum=0, wd=0, multi_softmax=False, wu_nepochs=0, wu_lr_factor=1, fix_bn=False, eval_on_train=False,
-                 logger=None, exemplars_dataset=None, all_outputs=False, T=0.7):
+                 logger=None, exemplars_dataset=None, all_outputs=False, T=0.1):
         super(Appr, self).__init__(model, device, nepochs, lr, lr_min, lr_factor, lr_patience, clipgrad, momentum, wd,
                                    multi_softmax, wu_nepochs, wu_lr_factor, fix_bn, eval_on_train, logger,
                                    exemplars_dataset)
@@ -233,26 +233,6 @@ class Appr(Inc_Learning_Appr):
         loss = torch.mean(loss, dim=0)
 
         return loss
-
-    def analyze_cls(self, test_loader):
-        cls_list = []
-        targets_list = []
-        prediction_list = []
-        with torch.no_grad():
-            self.model.eval()
-            for images, targets in test_loader:
-                outputs = self.model(images.to(self.device))
-                pred = torch.cat(outputs, dim=1).argmax(1)
-                pred = pred.cpu().numpy()
-                cls = self.model.model.model.token_list
-                for i in range(len(pred)):
-                    cls_list.append(cls[i].reshape((-1)))
-                    targets_list.append(targets[i])
-                    prediction_list.append(pred[i])
-        cls_list = np.asarray(cls_list)
-        targets_list = np.asarray(targets_list)
-        prediction_list = np.asarray(prediction_list)
-        return cls_list, targets_list, prediction_list
 
 
 class ContrastiveTransformation(object):

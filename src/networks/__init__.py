@@ -10,7 +10,6 @@ from .timm_vit_tiny_16_augreg_224 import Timm_Vit_tiny_16_augreg_224
 from .efficient_net import Efficient_net
 from .mobile_net import Mobile_net
 from .early_conv_vit import Early_conv_vit
-from .early_conv_vit_stud import Early_conv_vitStud
 
 
 # available torchvision models
@@ -26,7 +25,7 @@ tvmodels = ['alexnet',
             'wide_resnet50_2', 'wide_resnet101_2'
             ]
 
-allmodels = tvmodels + ['resnet32', 'LeNet', 'VggNet', "OVit_tiny_16_augreg_224", "Vit_tiny_16_augreg_224", "Timm_Vit_tiny_16_augreg_224", "Efficient_net", "Mobile_net", "Early_conv_vit", "Early_conv_vitStud"]
+allmodels = tvmodels + ['resnet32', 'LeNet', 'VggNet', "OVit_tiny_16_augreg_224", "Vit_tiny_16_augreg_224", "Timm_Vit_tiny_16_augreg_224", "Efficient_net", "Mobile_net", "Early_conv_vit"]
 
 
 def set_tvmodel_head_var(model):

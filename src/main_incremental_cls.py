@@ -15,6 +15,8 @@ from datasets.dataset_config import dataset_config
 from last_layer_analysis import last_layer_analysis
 from networks import tvmodels, allmodels, set_tvmodel_head_var
 
+from cls_analysis import analyze_cls
+
 
 def main(argv=None):
     tstart = time.time()
@@ -38,6 +40,8 @@ def main(argv=None):
                         help='Plot last layer analysis (default=%(default)s)')
     parser.add_argument('--no-cudnn-deterministic', action='store_true',
                         help='Disable CUDNN deterministic (default=%(default)s)')
+    parser.add_argument('--cls-analysis', action='store_true',
+                        help='Save data for cls analysis (default=%(default)s)')
     # dataset args
     parser.add_argument('--datasets', default=['cifar100'], type=str, choices=list(dataset_config.keys()),
                         help='Dataset or datasets used (default=%(default)s)', nargs='+', metavar="DATASET")
@@ -291,17 +295,16 @@ def main(argv=None):
             logger.log_scalar(task=t, iter=u, name='forg_tag', group='test', value=100 * forg_tag[t, u])
 
             # Log the cls representation for the test set.
-            cls, targets, _ = appr.analyze_cls(tst_loader[u])
-            list_cls.append(cls)
-            list_tgs.append(targets)
+            if args.cls_analysis:
+                cls, targets, _ = analyze_cls(model=net, device=device, test_loader=tst_loader[u])
+                list_cls.append(cls)
+                list_tgs.append(targets)
 
-        list_cls = np.array(list_cls).reshape(-1, 768)
-        list_tgs = np.array(list_tgs).reshape(-1, 1)
-
-        print('Lunghezza cls:{}'.format(len(list_cls)))
-
-        logger.log_result(list_cls, name='cls'+str(t), step=t)
-        logger.log_result(list_tgs, name='targets'+str(t), step=t)
+        if args.cls_analysis:
+            list_cls = np.array(list_cls).reshape(-1, 768)
+            list_tgs = np.array(list_tgs).reshape(-1, 1)
+            logger.log_result(list_cls, name='cls'+str(t), step=t)
+            logger.log_result(list_tgs, name='targets'+str(t), step=t)
 
         # Save
         print('Save at ' + os.path.join(args.results_path, full_exp_name))
@@ -315,8 +318,6 @@ def main(argv=None):
         aux = np.tril(np.repeat([[tdata[1] for tdata in taskcla[:max_task]]], max_task, axis=0))
         logger.log_result((acc_taw * aux).sum(1) / aux.sum(1), name="wavg_accs_taw", step=t)
         logger.log_result((acc_tag * aux).sum(1) / aux.sum(1), name="wavg_accs_tag", step=t)
-
-        # Log result of cls analysis
 
 
         # Last layer analysis
