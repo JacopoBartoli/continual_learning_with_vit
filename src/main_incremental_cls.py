@@ -301,8 +301,8 @@ def main(argv=None):
                 list_tgs.append(targets)
 
         if args.cls_analysis:
-            list_cls = np.array(list_cls).reshape(-1, 768)
-            list_tgs = np.array(list_tgs).reshape(-1, 1)
+            list_cls = np.array([elem for sl in list_cls for elem in sl]).reshape(-1, 768)
+            list_tgs = np.array([elem for sl in list_cls for elem in sl]).reshape(-1, 1)
             logger.log_result(list_cls, name='cls'+str(t), step=t)
             logger.log_result(list_tgs, name='targets'+str(t), step=t)
 
