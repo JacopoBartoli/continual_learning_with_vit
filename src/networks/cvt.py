@@ -179,14 +179,14 @@ class CVTBlock(nn.Module):
 
         return x
         
-
-class ContrastiveVisionTransformer(nn.Module):    
-
-    class MatMulWrapper(nn.Module):
+class EmbeddingsHook(nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.identity = nn.Identity()
         def forward(self, *args):
-            x = torch.matmul(*args)
-            x = x.squeeze(-2)
+            x = self.identity(x)            
             return x
+class ContrastiveVisionTransformer(nn.Module):    
 
     def __init__(self,
                  embedding_dim=768,
@@ -228,7 +228,7 @@ class ContrastiveVisionTransformer(nn.Module):
         self.n_input_channels = n_input_channels
 
         self.attention_pool = nn.Linear(self.embedding_dim, 1)
-        self.matmul_wrapper = self.MatMulWrapper()
+        self.embeddings_hook = EmbeddingsHook()
 
 
         self.positional_emb = None
@@ -284,7 +284,9 @@ class ContrastiveVisionTransformer(nn.Module):
         x = self.norm(x)
 
         
-        z = self.matmul_wrapper(F.softmax(self.attention_pool(x), dim=1).transpose(-1, -2), x)
+        x = torch.matmul(F.softmax(self.attention_pool(x), dim=1).transpose(-1, -2), x).squeeze(-2)
+
+        z = self.embeddings_hook(x)
 
         x = self.projection_head(z)
 
