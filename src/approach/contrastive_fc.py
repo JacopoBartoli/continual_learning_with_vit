@@ -187,7 +187,7 @@ class Appr(Inc_Learning_Appr):
             self.injection_classifier.eval()
 
             # Register hook for the embedding Z.
-            self.register_hook(self.model.model.matmul_wrapper)
+            self.register_hook(self.model.model.embeddings_hook)
             for x1, x2, targets in val_loader:
                 # Forward current model
                 outputs, gx1 = self.model(x1.to(self.device), return_features=True)

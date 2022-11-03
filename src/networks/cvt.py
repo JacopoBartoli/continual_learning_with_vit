@@ -184,8 +184,9 @@ class EmbeddingsHook(nn.Module):
             super().__init__()
             self.identity = nn.Identity()
         def forward(self, *args):
-            x = self.identity(x)            
+            x = self.identity(*args)            
             return x
+            
 class ContrastiveVisionTransformer(nn.Module):    
 
     def __init__(self,
@@ -304,7 +305,7 @@ class ContrastiveVisionTransformer(nn.Module):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
 
-def CVT(pretrained=False, **kwargs):
+def cvt(pretrained=False, **kwargs):
     if pretrained:
         raise NotImplementedError
     model = ContrastiveVisionTransformer(num_classes=100,

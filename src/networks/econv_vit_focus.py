@@ -4,6 +4,8 @@ import torch
 from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
 
+__all__ = ['econv_vit_focus']
+
 # classes
 class PreNorm(nn.Module):
     def __init__(self, dim, fn):
@@ -39,19 +41,31 @@ class Attention(nn.Module):
         self.scale = dim_head ** -0.5
 
         self.attend = nn.Softmax(dim = -1)
-        self.to_qkv = nn.Linear(dim, inner_dim * 3, bias = False)
+        self.to_qkv = nn.Linear(dim, inner_dim * 2, bias = False)
 
         self.to_out = nn.Sequential(
             nn.Linear(inner_dim, dim),
             nn.Dropout(dropout)
         ) if project_out else nn.Identity()
 
+        # Implementation of External Attention mechanism.
+        self.ext_k = None
+        self.ext_bias = None
+
+
     def forward(self, x):
      
-        qkv = self.to_qkv(x).chunk(3, dim = -1)
-        q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h = self.heads), qkv)
+        qv = self.to_qkv(x).chunk(2, dim = -1)
+        q, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h = self.heads), qv)
 
-        dots = torch.matmul(q, k.transpose(-1, -2)) * self.scale
+        if self.ext_k is None:
+            b, h, n, d = v.shape
+            self.ext_k = nn.Parameter(torch.randn(1, h, n, d)).to(v.device)
+        if self.ext_bias is None:
+            b, h, n, d = v.shape
+            self.ext_bias = nn.Parameter(torch.randn(1, h, n, n)).to(v.device)
+
+        dots = (torch.matmul(q, self.ext_k.transpose(-1, -2)) + self.ext_bias) * self.scale
 
         attn = self.attend(dots)
 
@@ -81,10 +95,10 @@ class EmbeddingsHook(nn.Module):
         super().__init__()
         self.identity = nn.Identity()
     def forward(self, *args):
-        x = self.identity(x)            
+        x = self.identity(*args)            
         return x
 
-class econv_vit_focus(nn.Module):
+class Econv_vit_focus(nn.Module):
     
     def __init__(self, *, num_classes, dim, depth, heads, mlp_dim, projection_dim, pool='cls', channels=3, dim_head=64, dropout=0.1, emb_dropout=0.1):
         """
@@ -160,7 +174,7 @@ class econv_vit_focus(nn.Module):
 def econv_vit_focus(pretrained=False, **kwargs):
     if pretrained:
         raise NotImplementedError
-    model = econv_vit_focus(dim=768,
+    model = Econv_vit_focus(dim=768,
             num_classes=100,
             depth=5,
             heads=8,
