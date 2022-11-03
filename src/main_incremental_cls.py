@@ -15,7 +15,7 @@ from datasets.dataset_config import dataset_config
 from last_layer_analysis import last_layer_analysis
 from networks import tvmodels, allmodels, set_tvmodel_head_var
 
-from cls_analysis import analyze_cls
+from cls_analysis import analyze_cls, analyze_focus, analyze_heads
 
 
 def main(argv=None):
@@ -230,6 +230,7 @@ def main(argv=None):
     acc_tag = np.zeros((max_task, max_task))
     forg_taw = np.zeros((max_task, max_task))
     forg_tag = np.zeros((max_task, max_task))
+
     for t, (_, ncla) in enumerate(taskcla):
         # Early stop tasks if flag
         if t >= max_task:
@@ -245,6 +246,9 @@ def main(argv=None):
 
         if 'olwf_asym' in args.approach:
             appr._task_size = ncla
+            appr._n_classes += ncla
+
+        if 'contrastive_fc' in args.approach:
             appr._n_classes += ncla
         
         # GridSearch
@@ -276,6 +280,7 @@ def main(argv=None):
 
         list_cls = []
         list_tgs = []
+        list_focuses = []
         # Test
         for u in range(t + 1):
             test_loss, acc_taw[t, u], acc_tag[t, u] = appr.eval(u, tst_loader[u])
@@ -303,6 +308,8 @@ def main(argv=None):
                     
                 list_cls.append(cls)
                 list_tgs.append(targets)
+        
+        
 
         if args.cls_analysis:
             out_shape = len(list_cls[0][0])
@@ -310,6 +317,18 @@ def main(argv=None):
             list_tgs = np.array([elem for sl in list_tgs for elem in sl]).reshape(-1, 1)
             logger.log_result(list_cls, name='cls'+str(t), step=t)
             logger.log_result(list_tgs, name='targets'+str(t), step=t)
+
+            if 'contrastive_fc' in args.approach:
+                focuses = analyze_focus(model=net, n_classes=appr._n_classes)
+                list_focuses.append(focuses)
+                out_shape = len(list_focuses[0][0])
+                list_focuses = np.array([elem for sl in list_focuses for elem in sl]).reshape(-1, out_shape)
+                logger.log_result(list_focuses, name='focuses'+str(t), step=t)
+
+        
+
+
+                
 
         # Save
         print('Save at ' + os.path.join(args.results_path, full_exp_name))
@@ -335,6 +354,11 @@ def main(argv=None):
             weights, biases = last_layer_analysis(net.heads, t, taskcla, y_lim=True, sort_weights=True)
             logger.log_figure(name='weights', iter=t, figure=weights)
             logger.log_figure(name='bias', iter=t, figure=biases)
+
+    if args.cls_analysis:
+        weight_list = analyze_heads(model=net)
+        logger.log_result(weight_list, name='heads', step=t)
+        
     # Print Summary
     utils.print_summary(acc_taw, acc_tag, forg_taw, forg_tag)
     print('[Elapsed time = {:.1f} h]'.format((time.time() - tstart) / (60 * 60)))

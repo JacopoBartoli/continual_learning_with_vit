@@ -67,7 +67,7 @@ class Appr(Inc_Learning_Appr):
             out1, z1 = self.model(x1.to(self.device), return_features=True)
             out2, z2 = self.model(x2.to(self.device), return_features=True)
 
-            features = torch.cat((z1, z2), dim=1).reshape((-1, 2, z1.size()[1]))
+            features = torch.cat((z1, z2), dim=0).reshape((-1, 2, z1.size()[1]))
             
             # Concatenate the output of each different input augmentation
             outputs = []
@@ -96,18 +96,7 @@ class Appr(Inc_Learning_Appr):
             for x1, x2, targets in val_loader:
                 # Forward current model
                 outputs, z1 = self.model(x1.to(self.device), return_features=True)
-                #out2, z2 = self.model(x2.to(self.device), return_features=True)
-
-                #features = torch.cat((z1,z2), dim=0).reshape((-1, 2, z1.size()[1]))
                 z1 = z1.reshape((-1,1,z1.size()[1]))
-
-                # Concatenate the output of each different input augmentation
-                #outputs = []
-                #for i in range(len(out1)):
-                #    outputs.append(torch.cat((out1[i], out2[i]), dim=0))             
-
-
-                #labels = torch.cat((targets,targets), dim=0)
 
                 
                 loss = self.contrastive_loss(z1, targets.to(self.device), self.T, 'all')
@@ -131,20 +120,20 @@ class Appr(Inc_Learning_Appr):
 
 
     def contrastive_loss(self, features, targets, temperature, contrast_mode='all'):
-        """Compute loss for model.  If 'labels' is None,
+        """Compute loss for model.  If 'targets' is None,
         it degenerates to SimCLR unsupervised loss:
         https://arxiv.org/pdf/2002.05709.pdf
          
         Args:
             features: hidden vector of shape [bsz, n_views, ...].
-            labels: ground truth of shape [bsz].
+            targets: ground truth of shape [bsz].
         Returns:
             A loss scalar.
         """
         batch_size = features.shape[0] 
 
 
-        if targets is None and mask is None:
+        if targets is None:
             mask = torch.eye(batch_size, dtype=torch.float32).to(self.device)
         elif targets is not None:
             labels = targets.contiguous().view(-1, 1)
@@ -198,7 +187,7 @@ class Appr(Inc_Learning_Appr):
         mean_log_prob_pos = (mask * log_prob).sum(1) / mask.sum(1)
 
         # loss
-        loss = - mean_log_prob_pos
+        loss = - mean_log_prob_pos / self.T
         loss = loss.view(contrast_count, batch_size).mean()
 
         return loss

@@ -9,10 +9,10 @@ from transformers import GPT2Model
 class FPT(nn.Module):
 
     def __init__(self, num_classes=100, pretrained=False):
-        super().__init__(
+        super().__init__()
 
         if not pretrained:
-            asser 1==0, 'cannot run without pretrained'
+            assert 1==0, 'cannot run without pretrained'
 
         self.patch_size = 8
         self.input_dim = 3 * self.patch_size**2

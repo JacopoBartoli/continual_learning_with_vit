@@ -36,3 +36,25 @@ def analyze_cls(model, device, test_loader, contrastive = False):
     targets_list = np.asarray(targets_list)
     #prediction_list = np.asarray(prediction_list)
     return cls_list, targets_list#, prediction_list
+
+def analyze_focus(model, n_classes):
+    prototype_list = []
+    prototype = model.model.learnable_focuses.data.cpu().numpy()
+    prototype = prototype[:n_classes]
+    for item in prototype:
+        prototype_list.append(item.reshape((-1)))
+    
+    prototype_list = np.asarray(prototype_list)
+
+    return prototype_list
+
+def analyze_heads(model):
+    weights_list = []
+    heads = model.model.heads
+    for item in heads:
+        weights_list.append(item)
+    
+    weights_list = np.asarray(weights_list)
+
+    return weights_list
+
