@@ -107,7 +107,7 @@ class Appr(Inc_Learning_Appr):
         if self.fix_bn and t > 0:
             self.model.freeze_bn()
         # Register hook for the embedding Z.
-        self.register_hook(self.model.model.matmul_wrapper)
+        self.register_hook(self.model.model.embeddings_hook)
 
         for x1, x2, targets in trn_loader:
             # Get the exemplars from the reharsal memory
