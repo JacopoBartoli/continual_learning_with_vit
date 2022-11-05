@@ -50,9 +50,9 @@ def analyze_focus(model, n_classes):
 
 def analyze_heads(model):
     weights_list = []
-    heads = model.model.heads
+    heads = model.heads
     for item in heads:
-        weights_list.append(item)
+        weights_list.append(item.weight)
     
     weights_list = np.asarray(weights_list)
 

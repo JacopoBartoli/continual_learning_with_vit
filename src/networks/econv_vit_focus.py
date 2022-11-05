@@ -41,7 +41,7 @@ class Attention(nn.Module):
         self.scale = dim_head ** -0.5
 
         self.attend = nn.Softmax(dim = -1)
-        self.to_qkv = nn.Linear(dim, inner_dim * 2, bias = False)
+        self.to_qv = nn.Linear(dim, inner_dim * 2, bias = False)
 
         self.to_out = nn.Sequential(
             nn.Linear(inner_dim, dim),
@@ -55,7 +55,7 @@ class Attention(nn.Module):
 
     def forward(self, x):
      
-        qv = self.to_qkv(x).chunk(2, dim = -1)
+        qv = self.to_qv(x).chunk(2, dim = -1)
         q, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h = self.heads), qv)
 
         if self.ext_k is None:
@@ -176,7 +176,7 @@ def econv_vit_focus(pretrained=False, **kwargs):
         raise NotImplementedError
     model = Econv_vit_focus(dim=768,
             num_classes=100,
-            depth=5,
+            depth=12,
             heads=8,
             mlp_dim = 2048,
             channels=3,

@@ -65,8 +65,9 @@ class Appr(Inc_Learning_Appr):
         self.injection_classifier = nn.Linear(out_shape[1], out_shape[0]).to(self.device)
     
     def _init_exemplars_loader(self, trn_loader):
+        bs = 10 if trn_loader.batch_size < 100 else trn_loader.batch_size // 10
         self.exemplars_loader = torch.utils.data.DataLoader(self.exemplars_dataset,
-                                                          batch_size=10,
+                                                          batch_size=bs,
                                                           num_workers=trn_loader.num_workers,
                                                           pin_memory=trn_loader.pin_memory,
                                                           shuffle=True)
@@ -162,11 +163,11 @@ class Appr(Inc_Learning_Appr):
             injection = self.injection_loss(t, injection_out, injection_labels.to(self.device))
             
             cross_entropy = self.criterion(t, out, injection_labels.to(self.device))
-
-            cross_entropy_expectation = 0
             
             if len(self.exemplars_dataset) > 0 and t > 0:
                 cross_entropy_expectation = self.criterion(t, ex_out, ex_labels.to(self.device))
+            else:
+                cross_entropy_expectation = 0
 
             loss = self.gamma * contrastive + injection + self.alpha * cross_entropy_expectation + self.beta * cross_entropy 
 
