@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
 
-__all__ = ['cvt']
+__all__ = ['contrastive_vision_transformer']
 
 class Shrink(torch.nn.Module):
     def __init__(self, stride):
@@ -305,7 +305,7 @@ class ContrastiveVisionTransformer(nn.Module):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
 
-def cvt(pretrained=False, **kwargs):
+def contrastive_vision_transformer(pretrained=False, **kwargs):
     if pretrained:
         raise NotImplementedError
     model = ContrastiveVisionTransformer(num_classes=100,
