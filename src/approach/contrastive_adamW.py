@@ -57,7 +57,7 @@ class Appr(Inc_Learning_Appr):
             params = list(self.model.model.parameters()) + list(self.model.heads[-1].parameters()) + list(self.injection_classifier.parameters())
         else:
             params = list(self.model.parameters()) + list(self.injection_classifier.parameters()) 
-        return torch.optim.Adam(params, lr=self.lr, weight_decay=self.wd)
+        return torch.optim.AdamW(params, lr=self.lr, weight_decay=self.wd)
 
     def pre_train_process(self, t, trn_loader):
         if self.warmup_epochs > 0:
