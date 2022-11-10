@@ -52,7 +52,7 @@ def analyze_heads(model):
     weights_list = []
     heads = model.heads
     for item in heads:
-        weights_list.append(item.weight)
+        weights_list.append(item.weight.reshape((-1)))
     
     weights_list = np.asarray(weights_list)
 

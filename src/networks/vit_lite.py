@@ -130,24 +130,19 @@ class Tokenizer(nn.Module):
             nn.init.kaiming_normal_(m.weight)
 
 
-class CCT(nn.Module):
+class ViT_Lite(nn.Module):
     def __init__(self,
                 img_size=32,
                  embedding_dim=768,
                  n_input_channels=3,
-                 n_conv_layers=2,
                  kernel_size=3,
-                 stride=2,
-                 padding=3,
-                 pooling_kernel_size=3,
-                 pooling_stride=2,
-                 pooling_padding=1,
                  dropout=0.1,
                  depth=7,
                  num_heads=8,
                  mlp_dim=2048,
                  num_classes=100,
-                 positional_embeddings = 'learnable',
+                 positional_embeddings='learnable',
+                 seq_pool=False,
                  *args, **kwargs
                  ):
         
@@ -155,23 +150,24 @@ class CCT(nn.Module):
         self.tokenizer = Tokenizer(n_input_channels=n_input_channels,
                                    n_output_channels=embedding_dim,
                                    kernel_size=kernel_size,
-                                   stride=stride,
-                                   padding=padding,
-                                   pooling_kernel_size=pooling_kernel_size,
-                                   pooling_stride=pooling_stride,
-                                   pooling_padding=pooling_padding,
-                                   max_pool=True,
-                                   activation=nn.ReLU,
-                                   n_conv_layers=n_conv_layers,
-                                   conv_bias=False)
+                                   stride=kernel_size,
+                                   padding=0,
+                                   max_pool=False,
+                                   activation=None,
+                                   n_conv_layers=1,
+                                   conv_bias=True)
 
         self.dropout = nn.Dropout(p=dropout)
 
-        self.attention_pool = nn.Linear(embedding_dim, 1)
+        self.seq_pool = seq_pool
 
         sequence_length=self.tokenizer.sequence_length(n_channels=n_input_channels,
                                                            height=img_size,
                                                            width=img_size)
+        if not self.seq_pool:     
+            sequence_length += 1
+            self.class_emb = nn.Parameter(torch.zeros(1, 1, embedding_dim),
+                                       requires_grad=True)
 
         if positional_embeddings == 'learnable':
             self.positional_emb = nn.Parameter(torch.zeros(1, sequence_length, embedding_dim),
@@ -194,8 +190,13 @@ class CCT(nn.Module):
     def forward(self,x):
         x = self.tokenizer(x)
 
+        if not self.seq_pool:
+            cls_token = self.class_emb.expand(x.shape[0], -1, -1)
+            x = torch.cat((cls_token, x), dim=1)
+
         if self.positional_emb is not None:
             x += self.positional_emb
+        
 
         x = self.dropout(x)
         for blk in self.blocks:
@@ -203,22 +204,24 @@ class CCT(nn.Module):
 
         x = self.norm(x)
 
-        x = torch.matmul(F.softmax(self.attention_pool(x), dim=1).transpose(-1, -2), x).squeeze(-2)
+        if self.seq_pool:
+            x = torch.matmul(F.softmax(self.attention_pool(x), dim=1).transpose(-1, -2), x).squeeze(-2)
+        else:
+            x = x[:, 0]
 
         x = self.fc(x)
 
         return x
 
-def compact_convolutional_transformer(pretrained=False, **kwargs):
+def vit_lite(pretrained=False, **kwargs):
     if pretrained:
         raise NotImplementedError
-    model = CCT(num_classes=100,
+    model = ViT_Lite(num_classes=100,
             embedding_dim=768,
             num_heads = 4,
             mlp_dim = 2048,
             channels=3, 
             dropout=0.1,
-            kernel_size=3,
-            n_conv_layers=1,
+            kernel_size=4,
             depth=3,**kwargs)
     return model

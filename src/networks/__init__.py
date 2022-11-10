@@ -13,6 +13,8 @@ from .early_conv_vit import Early_conv_vit
 from .contrastive_vision_transformer import contrastive_vision_transformer
 from .econv_vit_focus import econv_vit_focus
 from .compact_convolutional_transformer import compact_convolutional_transformer
+from .compact_vision_transformer import compact_vision_transformer
+from .vit_lite import vit_lite
 
 # available torchvision models
 tvmodels = ['alexnet',
@@ -27,7 +29,7 @@ tvmodels = ['alexnet',
             'wide_resnet50_2', 'wide_resnet101_2'
             ]
 
-allmodels = tvmodels + ['resnet32', 'LeNet', 'VggNet', "OVit_tiny_16_augreg_224", "Vit_tiny_16_augreg_224", "Timm_Vit_tiny_16_augreg_224", "Efficient_net", "Mobile_net", "Early_conv_vit", "contrastive_vision_transformer", "econv_vit_focus", "compact_convolutional_transformer"]
+allmodels = tvmodels + ['resnet32', 'LeNet', 'VggNet', "OVit_tiny_16_augreg_224", "Vit_tiny_16_augreg_224", "Timm_Vit_tiny_16_augreg_224", "Efficient_net", "Mobile_net", "Early_conv_vit", "contrastive_vision_transformer", "econv_vit_focus", "compact_convolutional_transformer", "compact_vision_transformer", "vit_lite"]
 
 
 def set_tvmodel_head_var(model):
